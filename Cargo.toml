@@ -4,5 +4,14 @@ name = "irccloud-parse-logs-rust"
 version = "0.0.1"
 authors = [ "Ryan Wright <rywright@gmail.com>" ]
 
+[profile.dev]
+opt-level = 3
+debug = false
+rpath = false
+lto = false
+debug-assertions = false
+codegen-units = 1
+panic = 'unwind'
+
 [dependencies]
 zip = "0.2"
