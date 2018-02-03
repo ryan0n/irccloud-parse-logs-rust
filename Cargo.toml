@@ -5,3 +5,4 @@ version = "0.0.1"
 authors = [ "Ryan Wright <rywright@gmail.com>" ]
 
 [dependencies]
+zip = "0.2"

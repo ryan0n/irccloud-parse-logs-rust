@@ -1,29 +1,75 @@
-//use std::io::{ Result, Read , Seek};
-//pub use read::ZipArchive;
+extern crate zip;
+
+use std::io;
+use std::fs;
 
 fn main() {
-    println!("Hello, world!");
+    std::process::exit(real_main());
 }
 
-// pub struct ZipFiles<'a, R: Read + Seek + 'a> {
-//     i: usize,
-//     archive: &'a mut ZipArchive<R>,
-// }
-//
-// impl<'a, R: Read + Seek + 'a> Iterator for ZipFiles<'a, R> {
-//     type Item = ZipResult<Vec<u8>>;
-//
-//     fn next(&mut self) -> Option<Self::Item> {
-//         let i = self.i;
-//         if i < self.archive.len() {
-//             self.i = i + 1;
-//             Some(self.archive.by_index(i).and_then(|mut file| {
-//                 let mut content = vec![];
-//                 try!(file.read_to_end(&mut content));
-//                 Ok(content)
-//             }))
-//         } else {
-//             None
-//         }
-//     }
-// }
+fn real_main() -> i32 {
+    let args: Vec<_> = std::env::args().collect();
+    if args.len() < 2 {
+        println!("Usage: {} <filename>", args[0]);
+        return 1;
+    }
+    let fname = std::path::Path::new(&*args[1]);
+    let file = fs::File::open(&fname).unwrap();
+
+    let mut archive = zip::ZipArchive::new(file).unwrap();
+
+    for i in 0..archive.len() {
+        let mut file = archive.by_index(i).unwrap();
+        let outpath = sanitize_filename(file.name());
+
+        {
+            let comment = file.comment();
+            if !comment.is_empty() {
+                println!("File {} comment: {}", i, comment);
+            }
+        }
+
+        if (&*file.name()).ends_with('/') {
+            println!("File {} extracted to \"{}\"", i, outpath.as_path().display());
+            fs::create_dir_all(&outpath).unwrap();
+        } else {
+            println!("File {} extracted to \"{}\" ({} bytes)", i, outpath.as_path().display(), file.size());
+            if let Some(p) = outpath.parent() {
+                if !p.exists() {
+                    fs::create_dir_all(&p).unwrap();
+                }
+            }
+            let mut outfile = fs::File::create(&outpath).unwrap();
+            io::copy(&mut file, &mut outfile).unwrap();
+        }
+
+        // Get and Set permissions
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+
+            if let Some(mode) = file.unix_mode() {
+                fs::set_permissions(&outpath, fs::Permissions::from_mode(mode)).unwrap();
+            }
+        }
+    }
+    return 0;
+}
+
+fn sanitize_filename(filename: &str) -> std::path::PathBuf {
+    let no_null_filename = match filename.find('\0') {
+        Some(index) => &filename[0..index],
+        None => filename,
+    };
+
+    std::path::Path::new(no_null_filename)
+        .components()
+        .filter(|component| match *component {
+            std::path::Component::Normal(..) => true,
+            _ => false,
+        })
+        .fold(std::path::PathBuf::new(), |mut path, ref cur| {
+            path.push(cur.as_os_str());
+            path
+        })
+}
