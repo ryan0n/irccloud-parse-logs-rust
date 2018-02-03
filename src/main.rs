@@ -5,12 +5,19 @@ use std::io::prelude::*;
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();
-    if args.len() < 2 {
-        println!("Usage: {} <filename>", args[0]);
-        std::process::exit(1);
+    if args.len() < 3 || args[1].is_empty() || args[2].is_empty(){
+        println!("Usage: {} <filename> <search phrase>", args[0]);
+        std::process::exit(0);
     }
+    parse_irccloud_log_file();
+}
+
+fn parse_irccloud_log_file() {
+    let args: Vec<_> = std::env::args().collect();
     let fname = std::path::Path::new(&*args[1]);
     let file = fs::File::open(&fname).unwrap();
+    let search_phrase = &args[2];
+    println!("\nzip file: {}\nsearch_phrase: {}\n\n", &args[1], &args[2]);
 
     let mut archive = zip::ZipArchive::new(file).unwrap();
 
@@ -25,10 +32,9 @@ fn main() {
         }
 
         if !(&*file.name()).ends_with('/') {
-
             let mut buffer = String::new();
             file.read_to_string(&mut buffer).expect("could not read file");
-            if buffer.contains("donald trump") {
+            if buffer.contains(search_phrase) {
                 println!("{}: {}", sanitize_filename(file.name()).as_path().display(), buffer);
             }
         }
