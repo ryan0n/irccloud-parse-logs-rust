@@ -1,0 +1,4 @@
+[[package]]
+name = "irccloud-parse-logs-rust"
+version = "0.0.1"
+

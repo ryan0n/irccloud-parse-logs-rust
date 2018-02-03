@@ -1,0 +1,7 @@
+[package]
+
+name = "irccloud-parse-logs-rust"
+version = "0.0.1"
+authors = [ "Ryan Wright <rywright@gmail.com>" ]
+
+[dependencies]
