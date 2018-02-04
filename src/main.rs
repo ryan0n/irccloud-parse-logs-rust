@@ -38,14 +38,13 @@ fn parse_irccloud_log_file() {
                 .expect("Invalid Regex");
 
             if needle.is_match(&content) {
-                let mut file_name = String::from(&*file.name());
-                let mut split_file_name = file_name.split("/");
-                let vec = split_file_name.collect::<Vec<&str>>();
-                let network = &*vec[1].to_string();
-                let channel = &*vec[2].to_string();
-
                 for line in content.lines() {
                     if needle.is_match(&line) {
+                        let mut file_name = String::from(&*file.name());
+                        let mut split_file_name = file_name.split("/");
+                        let vec = split_file_name.collect::<Vec<&str>>();
+                        let network = &*vec[1].to_string();
+                        let channel = &*vec[2].to_string();
                         println!("network: {}\nchannel: {}\nsearch phrase: {}\nraw line: {}\n\n", network, channel, search_phrase, line);
                     }
                 }
