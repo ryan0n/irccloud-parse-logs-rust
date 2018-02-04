@@ -17,7 +17,7 @@ fn parse_irccloud_log_file() {
     let args: Vec<_> = std::env::args().collect();
     let fname = std::path::Path::new(&*args[1]);
     let file = fs::File::open(&fname).unwrap();
-    let search_phrase = &args[2];
+    let search_phrase = &args[2].to_lowercase();
     println!("\nzip file: {}\nsearch_phrase: {}\n\n", &args[1], &args[2]);
 
     let mut archive = zip::ZipArchive::new(file).unwrap();
@@ -26,17 +26,22 @@ fn parse_irccloud_log_file() {
         let mut file = archive.by_index(i).unwrap();
 
         if !(&*file.name()).ends_with('/') {
-            let mut file_name = String::from(&*file.name());
-            let mut split_file_name = file_name.split("/");
-            let vec = split_file_name.collect::<Vec<&str>>();
-            let network = &*vec[1].to_string();
-            let channel = &*vec[2].to_string();
+            let mut content = String::new();
+            file.read_to_string(&mut content);
 
-            let reader = BufReader::new(file);
-            for line in reader.lines() {
-                let mut rawline: String = line.unwrap();
-                if rawline.contains(search_phrase) {
-                        println!("network: {}\nchannel: {}\nraw line: {}\n\n", network, channel, rawline);
+            if content.contains(search_phrase) {
+                let mut file_name = String::from(&*file.name());
+                let mut split_file_name = file_name.split("/");
+                let vec = split_file_name.collect::<Vec<&str>>();
+                let network = &*vec[1].to_string();
+                let channel = &*vec[2].to_string();
+
+                let reader = BufReader::new(file);
+                for line in reader.lines() {
+                    let mut rawline: String = line.unwrap().to_lowercase();
+                    if rawline.contains(search_phrase) {
+                            println!("network: {}\nchannel: {}\nraw line: {}\n\n", network, channel, rawline);
+                    }
                 }
             }
         }
