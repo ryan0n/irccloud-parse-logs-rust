@@ -21,8 +21,7 @@ fn parse_irccloud_log_file() {
     println!("\nzip file: {}\nsearch_phrase: {}\n\n", &args[1], &args[2]);
 
     let mut archive = zip::ZipArchive::new(file).unwrap();
-    let mut buffer = String::new();
-    
+
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).unwrap();
         {
@@ -30,35 +29,25 @@ fn parse_irccloud_log_file() {
             if !comment.is_empty() {
                 println!("File {} comment: {}", i, comment);
             }
+
         }
 
         if !(&*file.name()).ends_with('/') {
+            let mut file_name = String::from(&*file.name());
+            let mut split_file_name = file_name.split("/");
+            let vec = split_file_name.collect::<Vec<&str>>();
+            let network = &*vec[1].to_string();
+            let channel = &*vec[2].to_string();
+
             let reader = BufReader::new(file);
             for line in reader.lines() {
-                buffer = line.unwrap();
-                if buffer.contains(search_phrase) {
-                    println!("{}", buffer);
+                let mut rawline = String::new();
+                rawline = line.unwrap();
+                if rawline.contains(search_phrase) {
+                        println!("network: {}\nchannel: {}\nraw line: {}\n\n", network, channel, rawline);
                 }
             }
         }
     }
     std::process::exit(0);
-}
-
-fn sanitize_filename(filename: &str) -> std::path::PathBuf {
-    let no_null_filename = match filename.find('\0') {
-        Some(index) => &filename[0..index],
-        None => filename,
-    };
-
-    std::path::Path::new(no_null_filename)
-        .components()
-        .filter(|component| match *component {
-            std::path::Component::Normal(..) => true,
-            _ => false,
-        })
-        .fold(std::path::PathBuf::new(), |mut path, ref cur| {
-            path.push(cur.as_os_str());
-            path
-        })
 }
