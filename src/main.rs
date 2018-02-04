@@ -41,8 +41,7 @@ fn parse_irccloud_log_file() {
 
             let reader = BufReader::new(file);
             for line in reader.lines() {
-                let mut rawline = String::new();
-                rawline = line.unwrap();
+                let mut rawline: String = line.unwrap();
                 if rawline.contains(search_phrase) {
                         println!("network: {}\nchannel: {}\nraw line: {}\n\n", network, channel, rawline);
                 }
