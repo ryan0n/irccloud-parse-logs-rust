@@ -2,6 +2,7 @@ extern crate zip;
 
 use std::fs;
 use std::io::prelude::*;
+use std::io::BufReader;
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();
@@ -20,10 +21,10 @@ fn parse_irccloud_log_file() {
     println!("\nzip file: {}\nsearch_phrase: {}\n\n", &args[1], &args[2]);
 
     let mut archive = zip::ZipArchive::new(file).unwrap();
-
+    let mut buffer = String::new();
+    
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).unwrap();
-
         {
             let comment = file.comment();
             if !comment.is_empty() {
@@ -32,10 +33,12 @@ fn parse_irccloud_log_file() {
         }
 
         if !(&*file.name()).ends_with('/') {
-            let mut buffer = String::new();
-            file.read_to_string(&mut buffer).expect("could not read file");
-            if buffer.contains(search_phrase) {
-                println!("{}: {}", sanitize_filename(file.name()).as_path().display(), buffer);
+            let reader = BufReader::new(file);
+            for line in reader.lines() {
+                buffer = line.unwrap();
+                if buffer.contains(search_phrase) {
+                    println!("{}", buffer);
+                }
             }
         }
     }
