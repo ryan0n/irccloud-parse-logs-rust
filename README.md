@@ -2,4 +2,5 @@
 A CLI utility written in Rust to parse logs exported from IRC Cloud.<br /><br />
 
 Usage:<br />
-cargo run /path/to/irccloud.zip searchphrase
+cargo build; <br />
+target/debug/irccloud-parse-logs-rust /path/to/irccloud.zip search_phrase
