@@ -2,11 +2,9 @@ extern crate zip;
 extern crate time;
 extern crate regex;
 
-use std::time::Instant;
 use regex::RegexBuilder;
 use std::fs;
 use std::io::prelude::*;
-use std::io::BufReader;
 
 fn main() {
     let args: Vec<_> = std::env::args().collect();
@@ -22,21 +20,17 @@ fn parse_irccloud_log_file() {
     let fname = std::path::Path::new(&*args[1]);
     let file = fs::File::open(&fname).unwrap();
     let search_phrase = &args[2].to_lowercase();
-    println!("\nzip file: {}\nsearch_phrase: {}\n\n", &args[1], &args[2]);
+    println!("\nzip file: {}\nsearch phrase: {}\n\n", &args[1], &args[2]);
 
     let mut archive = zip::ZipArchive::new(file).unwrap();
 
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).unwrap();
         if !(&*file.name()).ends_with('/') {
-            let start = Instant::now();
 
             let mut content = String::new();
-            file.read_to_string(&mut content);
-
-            if start.elapsed().as_secs() > 0 {
-                println!("read to string: {}", start.elapsed().as_secs());
-            }
+            file.read_to_string(&mut content)
+                .expect("Could not read file");
 
             let needle = RegexBuilder::new(search_phrase)
                 .case_insensitive(true)
@@ -44,36 +38,17 @@ fn parse_irccloud_log_file() {
                 .expect("Invalid Regex");
 
             if needle.is_match(&content) {
-                println!("contains was true: {}", start.elapsed().as_secs());
-                let mut file_name = String::from(&*file.name());
-                //println!("content: {}", &content);
                 let mut file_name = String::from(&*file.name());
                 let mut split_file_name = file_name.split("/");
                 let vec = split_file_name.collect::<Vec<&str>>();
                 let network = &*vec[1].to_string();
                 let channel = &*vec[2].to_string();
 
-                let start = Instant::now();
-                println!("1network: {}\nchannel: {}, search_phrase: {}\n\n", network, channel, search_phrase);
-                println!("1search_phrase: {}\n\n", search_phrase);
-
-                let reader = BufReader::new(file);
-                for line in reader.lines() {
-                    println!("in line looper: {}", start.elapsed().as_secs());
-
-                    let mut rawline: String = line.unwrap();
-                    if needle.is_match(&rawline) {
-                        println!("2network: {}\nchannel: {}, search_phrase: {}\nraw line: {}\n\n", network, channel, search_phrase, rawline);
+                for line in content.lines() {
+                    if needle.is_match(&line) {
+                        println!("network: {}\nchannel: {}\nsearch phrase: {}\nraw line: {}\n\n", network, channel, search_phrase, line);
                     }
                 }
-                println!("loop through each line finished: {}", start.elapsed().as_secs());
-            } else {
-                if start.elapsed().as_secs() > 0 {
-                    println!("contains was false: {}", start.elapsed().as_secs());
-                }
-            }
-            if start.elapsed().as_secs() > 0 {
-                println!("whole file: {}", start.elapsed().as_secs());
             }
         }
     }
