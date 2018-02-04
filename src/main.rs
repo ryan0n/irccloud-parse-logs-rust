@@ -24,13 +24,6 @@ fn parse_irccloud_log_file() {
 
     for i in 0..archive.len() {
         let mut file = archive.by_index(i).unwrap();
-        {
-            let comment = file.comment();
-            if !comment.is_empty() {
-                println!("File {} comment: {}", i, comment);
-            }
-
-        }
 
         if !(&*file.name()).ends_with('/') {
             let mut file_name = String::from(&*file.name());
