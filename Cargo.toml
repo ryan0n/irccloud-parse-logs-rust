@@ -14,3 +14,5 @@ panic = 'unwind'
 
 [dependencies]
 zip = "0.2"
+time = "0.1"
+regex = "0.2"
